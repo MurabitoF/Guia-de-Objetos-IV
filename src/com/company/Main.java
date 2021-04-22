@@ -30,17 +30,20 @@ public class Main {
         clients.add(new Client("Mariano", "45484465", "Calle 1434"));
         clients.add(new Client("Martha", "49875454", "Calle 1879"));
 
+        VideoStore videoStore = new VideoStore(clients, movies, tickets);
+
         do {
             System.out.println("Bienvenido al VideoClub Roberto");
             System.out.println();
             System.out.println("1- Agregar nueva pelicula");
             System.out.println("2- Alquilar pelicula");
-            System.out.println("3- Ver peliculas alquiladas");
-            System.out.println("4- Ver devoluciones de hoy");
-            System.out.println("5- Ver alquileres de un cliente");
-            System.out.println("6- Peliculas mas alquiladas");
-            System.out.println("7- Buscar peliculas por genero");
-            System.out.println("8- Ver detalles de una pelicula");
+            System.out.println("3- Devolver pelicula");
+            System.out.println("4- Ver peliculas alquiladas");
+            System.out.println("5- Ver devoluciones de hoy");
+            System.out.println("6- Ver alquileres de un cliente");
+            System.out.println("7- Peliculas mas alquiladas");
+            System.out.println("8- Buscar peliculas por genero");
+            System.out.println("9- Ver detalles de una pelicula");
             System.out.println("0- Salir");
             System.out.println();
             System.out.print(">>> ");
@@ -50,35 +53,16 @@ public class Main {
 
             switch (opcion) {
                 case 1:
-                    System.out.print("Titulo: ");
-                    String title = scanner.nextLine();
-                    System.out.print("Genero: ");
-                    String genre = scanner.nextLine();
-                    System.out.print("Fecha de lanzamiento: ");
-                    LocalDate releaseDate = LocalDate.parse(scanner.nextLine());
-                    System.out.print("Duracion: ");
-                    Integer runTime = scanner.nextInt();
-                    scanner.nextLine();
-                    System.out.print("Clasificacion: ");
-                    String rating = scanner.nextLine();
-                    System.out.print("Pais de origen: ");
-                    String country = scanner.nextLine();
-                    System.out.print("Descripcion: ");
-                    String description = scanner.nextLine();
-                    System.out.print("Nro de copias: ");
-                    int copies = scanner.nextInt();
-
-                    movies.add(new Movie(title, genre, releaseDate, runTime, rating, country, description, copies));
+                    videoStore.addMovie();
                     break;
                 case 2:
                     System.out.print("Ingrese nombre cliente: ");
-                    Client rentClient = findClient(scanner.nextLine(), clients);
+                    Client rentClient = videoStore.findClient(scanner.nextLine());
                     if (rentClient == null) {
-                        rentClient = registerClient();
-                        clients.add(rentClient);
+                        videoStore.registerClient();
                     }
                     System.out.print("Ingrese el titulo de la pelicula: ");
-                    Movie rentalMovie = findMovie(scanner.nextLine(), movies);
+                    Movie rentalMovie = videoStore.findMovie(scanner.nextLine());
                     if (rentalMovie != null) {
                         tickets.add(rentClient.rentMovie(rentalMovie));
                         System.out.println(String.format("La pelicula %s ha sido alquilada por %s", rentalMovie.getTitle(), rentClient.getName()));
@@ -88,6 +72,17 @@ public class Main {
                     scanner.nextLine();
                     break;
                 case 3:
+                    System.out.println("Devolver peliculas");
+                    System.out.println();
+                    System.out.print("Nombre del cliente: ");
+                    Client clientFound = videoStore.findClient(scanner.nextLine());
+                    System.out.print("Titulo de la pelicula: ");
+                    Movie movieFound = videoStore.findMovie(scanner.nextLine());
+                    clientFound.returnMovie(videoStore.findTicket(clientFound, movieFound));
+                    System.out.println(tickets);
+                    scanner.nextLine();
+                    break;
+                case 4:
                     System.out.println("Listado de alquileres");
                     System.out.println();
                     if (tickets.isEmpty()) {
@@ -101,7 +96,7 @@ public class Main {
                     }
                     scanner.nextLine();
                     break;
-                case 4:
+                case 5:
                     System.out.println("Devoluciones de hoy");
                     System.out.println();
                     if (tickets.isEmpty()) {
@@ -115,16 +110,16 @@ public class Main {
                     }
                     scanner.nextLine();
                     break;
-                case 5:
+                case 6:
                     System.out.println("Alquileres de cliente");
                     System.out.println();
                     System.out.print("Nombre del cliente: ");
-                    Client foundClient = findClient(scanner.nextLine(), clients);
+                    Client foundClient = videoStore.findClient(scanner.nextLine());
 
                     if (foundClient == null) {
                         System.out.println("El cliente no existe");
                     } else {
-                        Ticket[] lastTickets = lastTickets(foundClient, tickets);
+                        Ticket[] lastTickets = videoStore.lastTickets(foundClient);
                         for (Ticket ticket : lastTickets) {
                             if(ticket != null){
                                 System.out.println(ticket);
@@ -133,23 +128,23 @@ public class Main {
                     }
                     scanner.nextLine();
                     break;
-                case 6:
-                    break;
                 case 7:
+                    break;
+                case 8:
                     System.out.println("Peliculas por genero");
                     System.out.println();
                     System.out.print("Ingrese genero: ");
-                    List<Movie> moviesByGenre = moviesByGenre(scanner.nextLine(), movies);
+                    List<Movie> moviesByGenre = videoStore.moviesByGenre(scanner.nextLine());
                     for (Movie movie : moviesByGenre) {
                         System.out.println(movie);
                     }
                     scanner.nextLine();
                     break;
-                case 8:
+                case 9:
                     System.out.println("Ver detalle de pelicula");
                     System.out.println();
                     System.out.print("Nombre de la pelicula: ");
-                    Movie foundMovie = findMovie(scanner.nextLine(), movies);
+                    Movie foundMovie = videoStore.findMovie(scanner.nextLine());
                     if (foundMovie == null){
                         System.out.println("La pelicula no esta en el inventario");
                     }else{
@@ -164,65 +159,5 @@ public class Main {
                     scanner.nextLine();
             }
         } while (opcion != 0);
-    }
-
-    public static Client findClient(String name, List<Client> clients) {
-        for (Client client : clients) {
-            if (name.toLowerCase(Locale.ROOT).compareTo(client.getName().toLowerCase(Locale.ROOT)) == 0) {
-                return client;
-            }
-        }
-        return null;
-    }
-
-    public static Client registerClient() {
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("Registro clientes");
-        System.out.println();
-        System.out.print("Nombre: ");
-        String name = scanner.nextLine();
-        System.out.print("Telefono: ");
-        String phone = scanner.nextLine();
-        System.out.print("Direccion: ");
-        String address = scanner.nextLine();
-
-        return new Client(name, phone, address);
-    }
-
-    public static Movie findMovie(String title, List<Movie> movies) {
-        for (Movie movie : movies) {
-            if (title.toLowerCase(Locale.ROOT).compareTo(movie.getTitle().toLowerCase(Locale.ROOT)) == 0 && movie.getStock() >= 1) {
-                return movie;
-            }
-        }
-        return null;
-    }
-
-    public static Ticket[] lastTickets(Client client, List<Ticket> tickets) {
-        Ticket[] lastTicket = new Ticket[10];
-        List<Ticket> reverseTickets = new ArrayList<>();
-        for (Ticket ticket : tickets) {
-            if (ticket.getClient().getName().toLowerCase(Locale.ROOT).equals(client.getName().toLowerCase(Locale.ROOT))) {
-                reverseTickets.add(ticket);
-            }
-        }
-        Collections.reverse(reverseTickets);
-        reverseTickets.toArray(lastTicket);
-        return lastTicket;
-    }
-
-    /*public static Movie[] topMovies(List<Movie> movies, List<Ticket> tickets){
-
-    }*/
-
-    public static List<Movie> moviesByGenre(String genre, List<Movie> movies){
-        List<Movie> moviesGenre = new ArrayList<>();
-        for (Movie movie : movies) {
-            if(genre.toLowerCase(Locale.ROOT).equals(movie.getGenre().toLowerCase(Locale.ROOT))){
-                moviesGenre.add(movie);
-            }
-        }
-        return moviesGenre;
     }
 }
